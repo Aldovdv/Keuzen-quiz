@@ -1,0 +1,25 @@
+{
+  "name": "Krëfel's Keuze",
+  "short_name": "Keuze",
+  "description": "Product keuzen quiz voor Krëfel medewerkers",
+  "start_url": "/Keuzen-quiz/",
+  "scope": "/Keuzen-quiz/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050a14",
+  "theme_color": "#050a14",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

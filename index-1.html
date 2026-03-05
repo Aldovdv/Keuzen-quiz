@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Krëfel's Keuze</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow:wght@400;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<style>
+  :root {
+    --bg:      #050a14;
+    --surf:    #0c1524;
+    --surf2:   #112033;
+    --border:  #1e3454;
+    --border2: #2a4a78;
+    --blue:    #1565c0;
+    --blue2:   #1976d2;
+    --bluel:   #42a5f5;
+    --teal:    #00bcd4;
+    --teall:   #4dd0e1;
+    --white:   #e8f4fd;
+    --dim:     #5a7a9a;
+    --ok:      #00e676;
+    --warn:    #ffab00;
+    --err:     #ef5350;
+    --fui:    'Barlow', sans-serif;
+    --fcond:  'Barlow Condensed', sans-serif;
+    --fmono:  'DM Mono', monospace;
+    --navh:   56px;
+    --tabh:   64px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--white);font-family:'Barlow',sans-serif;font-size:15px;line-height:1.4}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 100% 0%,rgba(21,101,192,.18) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 0% 100%,rgba(0,188,212,.10) 0%,transparent 55%);pointer-events:none;z-index:0}
+  #app{position:relative;z-index:1;max-width:480px;margin:0 auto;height:100vh;display:flex;flex-direction:column}
+
+  /* NAV */
+  .top-nav{flex-shrink:0;height:var(--navh);display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--border);background:rgba(5,10,20,.96);backdrop-filter:blur(16px)}
+  .brand{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;letter-spacing:.5px;background:linear-gradient(135deg,var(--bluel) 0%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .brand span{background:none;-webkit-text-fill-color:var(--dim);font-weight:700}
+  .nav-btn{background:none;border:1px solid var(--border2);border-radius:8px;color:var(--dim);font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer;transition:all .15s;letter-spacing:.3px}
+  .nav-btn:active{border-color:var(--teal);color:var(--teal)}
+
+  /* LAYOUT */
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  .bottom-tabs{flex-shrink:0;height:var(--tabh);display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border);background:rgba(5,10,20,.97);backdrop-filter:blur(16px)}
+  .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;color:var(--dim);font-family:'Barlow',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:color .15s;padding:10px 0 8px}
+  .tab.active{color:var(--teal)}
+  .tab-ico{font-size:20px;line-height:1}
+
+  /* SCREENS */
+  .screen{display:none;padding:20px 18px}
+  .screen.active{display:block;animation:up .2s ease}
+  @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* TYPE */
+  .ptitle{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:32px;letter-spacing:-.5px;line-height:1;margin-bottom:4px}
+  .psub{font-size:13px;color:var(--dim);margin-bottom:20px}
+  .lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+
+  /* CARD */
+  .card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+
+  /* BUTTONS */
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;border-radius:12px;border:none;font-family:'Barlow',sans-serif;font-size:15px;font-weight:800;letter-spacing:.3px;cursor:pointer;transition:all .15s}
+  .btn-p{background:linear-gradient(135deg,var(--blue) 0%,var(--teal) 100%);color:#fff}
+  .btn-p:active{filter:brightness(.9);transform:scale(.98)}
+  .btn-p:disabled{opacity:.4}
+  .btn-g{background:var(--surf);border:1px solid var(--border2);color:var(--white)}
+  .btn-g:active{background:var(--surf2)}
+  .btn-d{background:rgba(239,83,80,.12);border:1px solid var(--err);color:var(--err)}
+  .btn-sm{width:auto;padding:8px 14px;font-size:13px;border-radius:8px}
+
+  /* IMPORT ZONE */
+  .izone{border:2px dashed var(--border2);border-radius:16px;padding:44px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+  .izone:active{border-color:var(--teal);background:rgba(0,188,212,.05)}
+  .izone input{display:none}
+  .iico{font-size:44px;display:block;margin-bottom:14px}
+  .ititle{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px}
+  .ihint{font-size:13px;color:var(--dim)}
+
+  /* PROGRESS */
+  .pbar{height:4px;background:var(--surf2);border-radius:4px;overflow:hidden}
+  .pfill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue) 0%,var(--teal) 100%);transition:width .25s ease}
+
+  /* OCR STATUS */
+  .ocr-box{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:28px 20px;text-align:center;margin-bottom:16px}
+  .spin{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--teal);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ocr-lbl{font-size:12px;color:var(--dim);margin-bottom:8px}
+
+  /* CORRECTION TABLE */
+  .corr-hdr{display:grid;grid-template-columns:90px 1fr 58px 30px;gap:6px;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border)}
+  .corr-tbl{background:var(--surf);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;max-height:45vh;overflow-y:auto}
+  .crow{display:grid;grid-template-columns:90px 1fr 58px 30px;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center}
+  .crow:last-child{border-bottom:none}
+  .crow.fl{border-left:3px solid var(--warn);background:rgba(255,171,0,.04)}
+  .crow.nw{border-left:3px solid var(--ok);background:rgba(0,230,118,.04)}
+  .crow.ch{border-left:3px solid var(--teal);background:rgba(0,188,212,.04)}
+  .cinput{background:var(--surf2);border:1px solid transparent;border-radius:7px;color:var(--white);font-family:'DM Mono',monospace;font-size:12px;padding:7px 8px;width:100%;transition:border-color .15s}
+  .cinput:focus{outline:none;border-color:var(--teal)}
+  .badge{font-size:8px;font-weight:800;padding:3px 6px;border-radius:4px;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
+  .bwarn{background:rgba(255,171,0,.15);color:var(--warn)}
+  .bnew{background:rgba(0,230,118,.15);color:var(--ok)}
+  .bchg{background:rgba(0,188,212,.15);color:var(--teal)}
+  .bok{background:rgba(66,165,245,.12);color:var(--bluel)}
+  .delbtn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:4px;border-radius:5px;display:flex;align-items:center;justify-content:center;line-height:1}
+  .delbtn:active{color:var(--err)}
+
+  /* MISSING */
+  .miss-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+  .miss-item:last-child{border-bottom:none}
+  .miss-info{flex:1;min-width:0}
+  .miss-code{font-size:10px;color:var(--dim)}
+  .miss-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .miss-pts{font-family:'DM Mono',monospace;font-size:13px;color:var(--teal);font-weight:500}
+  .miss-acts{display:flex;gap:6px;flex-shrink:0}
+
+  /* STATS */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .stat{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center}
+  .sval{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:30px;line-height:1;color:var(--teal);margin-bottom:4px;letter-spacing:-.5px}
+  .slbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+
+  /* CHIPS */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{background:var(--surf);border:1.5px solid var(--border);border-radius:20px;color:var(--dim);font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;transition:all .15s}
+  .chip.on{border-color:var(--teal);color:var(--teal);background:rgba(0,188,212,.08)}
+
+  /* QUIZ */
+  .qbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .qcnt{font-family:'DM Mono',monospace;font-size:13px;color:var(--dim)}
+  .qcnt strong{color:var(--white)}
+  .streak{background:rgba(255,171,0,.15);color:var(--warn);font-weight:800;font-size:13px;padding:4px 10px;border-radius:20px}
+  .qcard{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:24px 18px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden}
+  .qcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue) 0%,var(--teal) 100%)}
+  .qtype{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+  .qtext{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;line-height:1.15;margin-bottom:6px;letter-spacing:-.3px}
+  .qsub{font-size:12px;color:var(--dim)}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .opt{background:var(--surf);border:1.5px solid var(--border2);border-radius:12px;color:var(--white);font-family:'DM Mono',monospace;font-size:15px;font-weight:500;padding:18px 10px;cursor:pointer;transition:all .12s;text-align:center}
+  .opt:active:not(:disabled){transform:scale(.97)}
+  .opt.correct{border-color:var(--ok);background:rgba(0,230,118,.10);color:var(--ok)}
+  .opt.wrong{border-color:var(--err);background:rgba(239,83,80,.10);color:var(--err)}
+  .opt:disabled{cursor:default}
+  .tin{background:var(--surf);border:2px solid var(--border2);border-radius:12px;color:var(--white);font-family:'DM Mono',monospace;font-size:22px;font-weight:500;padding:16px;width:100%;text-align:center;transition:border-color .15s;margin-bottom:10px}
+  .tin:focus{outline:none;border-color:var(--teal)}
+  .tin.correct{border-color:var(--ok);color:var(--ok)}
+  .tin.wrong{border-color:var(--err);color:var(--err)}
+  .fb{text-align:center;font-size:14px;font-weight:700;padding:12px 16px;border-radius:10px;margin-bottom:12px}
+  .fb.correct{background:rgba(0,230,118,.10);color:var(--ok)}
+  .fb.wrong{background:rgba(239,83,80,.10);color:var(--err)}
+
+  /* RESULT */
+  .reswrap{text-align:center;padding:32px 0 20px}
+  .respct{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:80px;line-height:1;margin-bottom:8px;letter-spacing:-2px}
+  .respct.great{color:var(--ok)}
+  .respct.ok{color:var(--warn)}
+  .respct.bad{color:var(--err)}
+  .reslbl{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;margin-bottom:4px}
+  .ressub{font-size:13px;color:var(--dim);margin-bottom:24px}
+
+  /* PRODUCT LIST */
+  .srch-wrap{position:relative;margin-bottom:14px}
+  .srch-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+  .srch{background:var(--surf);border:1px solid var(--border);border-radius:12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;padding:13px 14px 13px 40px;width:100%;transition:border-color .15s}
+  .srch:focus{outline:none;border-color:var(--teal)}
+  .srch::placeholder{color:var(--dim)}
+  .plist{background:var(--surf);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .pitem{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background .12s}
+  .pitem:last-child{border-bottom:none}
+  .pitem:active{background:var(--surf2)}
+  .pinfo{flex:1;min-width:0}
+  .pcode{font-size:10px;color:var(--dim);margin-bottom:2px;font-family:'DM Mono',monospace}
+  .pname{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pweak{font-size:10px;color:var(--err);margin-top:2px}
+  .ppts{text-align:right;flex-shrink:0}
+  .pval{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;line-height:1;color:var(--teal);letter-spacing:-.5px}
+  .plbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+  .pacts{display:flex;gap:6px;flex-shrink:0}
+  .ibtn{background:var(--surf2);border:1px solid var(--border);color:var(--dim);border-radius:8px;padding:8px;cursor:pointer;font-size:14px;transition:all .12s;display:flex;align-items:center;justify-content:center;line-height:1}
+  .ibtn:active{border-color:var(--teal);color:var(--teal)}
+
+  /* EMPTY */
+  .empty{text-align:center;padding:60px 20px;color:var(--dim)}
+  .eico{font-size:52px;display:block;margin-bottom:16px}
+  .etitle{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--white);margin-bottom:8px}
+  .esub{font-size:13px;line-height:1.6}
+
+  /* MODAL */
+  .mback{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  .mback.open{opacity:1;pointer-events:all}
+  .modal{background:var(--surf);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:24px 18px 40px;width:100%;max-width:480px;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+  .mback.open .modal{transform:translateY(0)}
+  .mtitle{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;margin-bottom:20px}
+  .mfield{margin-bottom:14px}
+  .mlbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+  .minput{background:var(--surf2);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:'DM Mono',monospace;font-size:15px;padding:12px 14px;width:100%;transition:border-color .15s}
+  .minput:focus{outline:none;border-color:var(--teal)}
+  .macts{display:flex;gap:10px;margin-top:20px}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:calc(var(--tabh) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surf2);border:1px solid var(--border2);border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:all .25s ease;white-space:nowrap;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.success{border-color:var(--ok);color:var(--ok)}
+  .toast.error{border-color:var(--err);color:var(--err)}
+
+  /* WRONG ITEM */
+  .witem{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.15);border-radius:10px;margin-bottom:8px;font-size:13px;gap:8px}
+  .wname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wpts{color:var(--teal);font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0}
+  .wcnt{color:var(--err);font-size:11px;flex-shrink:0}
+
+  ::-webkit-scrollbar{width:3px}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="top-nav">
+    <div class="brand">Krëfel's<span> Keuze</span></div>
+    <button class="nav-btn" onclick="exportData()">Exporteer</button>
+  </div>
+
+  <div class="scroll" id="scroll">
+
+    <!-- IMPORT -->
+    <div class="screen active" id="screen-import">
+      <div class="ptitle">Importeer</div>
+      <div class="psub">Maandelijks Keuzen document</div>
+
+      <div class="izone" id="izone" onclick="document.getElementById('fin').click()">
+        <input type="file" id="fin" accept="image/*" onchange="handleFile(event)">
+        <span class="iico">📷</span>
+        <div class="ititle">Importeer Keuzen document</div>
+        <div class="ihint">Tik om een foto te kiezen uit je galerij</div>
+      </div>
+
+      <p style="font-size:12px;color:var(--dim);margin-bottom:20px;line-height:1.6;">Na het scannen krijg je een correctiescherm. Niets wordt opgeslagen totdat jij bevestigt.</p>
+
+      <div id="ocr-box" style="display:none" class="ocr-box">
+        <div class="spin"></div>
+        <div class="ocr-lbl" id="ocr-lbl">Bezig met scannen...</div>
+        <div class="pbar"><div class="pfill" id="ocr-fill" style="width:0%"></div></div>
+      </div>
+
+      <div id="corr-sec" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div class="lbl">Controleer resultaten</div>
+            <div style="font-size:12px;color:var(--dim)" id="scan-sum"></div>
+          </div>
+          <button class="btn btn-g btn-sm" onclick="addRow()">+ Rij</button>
+        </div>
+
+        <div class="corr-tbl">
+          <div class="corr-hdr"><span>Code</span><span>Artikel</span><span>Punten</span><span></span></div>
+          <div id="crow-wrap"></div>
+        </div>
+
+        <div id="miss-sec" style="display:none;margin-bottom:14px">
+          <div class="lbl" style="color:var(--warn)">Niet gevonden in scan</div>
+          <div style="font-size:12px;color:var(--dim);margin-bottom:10px">Kies per product: bewaren of verwijderen.</div>
+          <div class="card" style="padding:0;overflow:hidden"><div id="miss-wrap"></div></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-g btn-sm" onclick="keepAll()">Alles bewaren</button>
+            <button class="btn btn-d btn-sm" onclick="dropAll()">Alles verwijderen</button>
+          </div>
+        </div>
+
+        <button class="btn btn-p" onclick="confirmImport()">Bevestigen &amp; opslaan</button>
+        <button class="btn btn-g" style="margin-top:10px" onclick="cancelImport()">Annuleren</button>
+      </div>
+
+      <div id="imp-tools" style="margin-top:8px">
+        <div class="card">
+          <div class="lbl">Backup importeren</div>
+          <div style="font-size:12px;color:var(--dim);margin-bottom:12px">Herstel een eerder geëxporteerde JSON backup.</div>
+          <button class="btn btn-g" onclick="document.getElementById('jin').click()">JSON importeren</button>
+          <input type="file" id="jin" accept=".json" style="display:none" onchange="importJSON(event)">
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="screen" id="screen-quiz">
+
+      <div id="qsetup">
+        <div class="ptitle">Quiz</div>
+        <div class="psub">Kies je instellingen</div>
+
+        <div class="stats">
+          <div class="stat"><div class="sval" id="s-total">0</div><div class="slbl">Producten</div></div>
+          <div class="stat"><div class="sval" id="s-weak" style="color:var(--err)">0</div><div class="slbl">Zwak</div></div>
+          <div class="stat"><div class="sval" id="s-master" style="color:var(--ok)">0</div><div class="slbl">Beheerst</div></div>
+        </div>
+
+        <div class="lbl">Modus</div>
+        <div class="chips">
+          <div class="chip" id="cm-mc"    onclick="setMode('mc')">Multiple choice</div>
+          <div class="chip" id="cm-type"  onclick="setMode('type')">Typ het antwoord</div>
+          <div class="chip on" id="cm-mix" onclick="setMode('mixed')">Gemengd</div>
+        </div>
+
+        <div class="lbl">Vraag type</div>
+        <div class="chips">
+          <div class="chip on" data-qt="name-pts"  onclick="togQT(this)">Naam → Punten</div>
+          <div class="chip on" data-qt="pts-name"  onclick="togQT(this)">Punten → Naam</div>
+          <div class="chip on" data-qt="code-name" onclick="togQT(this)">Code → Naam</div>
+        </div>
+
+        <div class="lbl">Focus</div>
+        <div class="chips" style="margin-bottom:20px">
+          <div class="chip on" id="fc-all"  onclick="setFocus('all')">Alles</div>
+          <div class="chip"    id="fc-weak" onclick="setFocus('weak')">Zwakke punten</div>
+        </div>
+
+        <button class="btn btn-p" onclick="startQuiz()" id="start-btn">Start quiz</button>
+
+        <div id="weak-sec" style="display:none;margin-top:20px">
+          <div class="lbl" style="color:var(--err)">Meest fout</div>
+          <div id="weak-list"></div>
+        </div>
+      </div>
+
+      <div id="qactive" style="display:none">
+        <div class="qbar">
+          <div class="qcnt">Vraag <strong id="qnum">1</strong>/<span id="qmax">15</span></div>
+          <div class="streak" id="streak-el" style="display:none">🔥 <span id="streak-n">0</span></div>
+          <div class="qcnt">Score: <strong id="qscore">0</strong></div>
+        </div>
+        <div class="pbar" style="margin-bottom:18px"><div class="pfill" id="qprog" style="width:0%"></div></div>
+
+        <div class="qcard">
+          <div class="qtype" id="qtype"></div>
+          <div class="qtext" id="qtext"></div>
+          <div class="qsub"  id="qsub"></div>
+        </div>
+
+        <div id="mc-area" class="opts"></div>
+
+        <div id="type-area" style="display:none">
+          <input type="text" class="tin" id="tin" placeholder="Typ je antwoord..." onkeydown="tkey(event)" inputmode="decimal">
+          <button class="btn btn-p" id="tsub" onclick="submitType()">Controleer</button>
+        </div>
+
+        <div id="fb-area" style="display:none">
+          <div class="fb" id="fb-txt"></div>
+          <button class="btn btn-g" onclick="nextQ()">Volgende →</button>
+        </div>
+
+        <button class="btn btn-g" style="margin-top:12px;font-size:12px;opacity:.4" onclick="endQuiz()">Stoppen</button>
+      </div>
+
+      <div id="qresult" style="display:none">
+        <div class="reswrap">
+          <div class="respct" id="rpct"></div>
+          <div class="reslbl" id="rlbl"></div>
+          <div class="ressub" id="rsub"></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="sval" id="rc" style="color:var(--ok)">0</div><div class="slbl">Correct</div></div>
+          <div class="stat"><div class="sval" id="rw" style="color:var(--err)">0</div><div class="slbl">Fout</div></div>
+          <div class="stat"><div class="sval" id="rs" style="color:var(--warn)">0</div><div class="slbl">Max streak</div></div>
+        </div>
+        <div id="rweak-wrap" style="display:none;margin-bottom:20px">
+          <div class="lbl" style="color:var(--err)">Nog te leren</div>
+          <div id="rweak-list"></div>
+        </div>
+        <button class="btn btn-p" onclick="showScreen('quiz')">Opnieuw quizzen</button>
+        <button class="btn btn-g" style="margin-top:10px" onclick="showScreen('list')">Productlijst</button>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div class="screen" id="screen-list">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+        <div class="ptitle">Producten</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--dim)" id="lcnt">0 producten</div>
+      </div>
+      <div class="psub" id="lmeta"></div>
+      <div class="srch-wrap">
+        <span class="srch-ico">🔍</span>
+        <input type="text" class="srch" placeholder="Zoek artikel..." oninput="filterList(this.value)" id="srch">
+      </div>
+      <div id="pcon"></div>
+      <div style="margin-top:14px">
+        <button class="btn btn-g btn-sm" onclick="openModal(null)">+ Product toevoegen</button>
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <div class="bottom-tabs">
+    <button class="tab active" id="tab-import" onclick="showScreen('import')"><span class="tab-ico">📥</span>IMPORT</button>
+    <button class="tab" id="tab-quiz"   onclick="showScreen('quiz')"><span class="tab-ico">🎯</span>QUIZ</button>
+    <button class="tab" id="tab-list"   onclick="showScreen('list')"><span class="tab-ico">☰</span>PRODUCTEN</button>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="mback" id="mback">
+  <div class="modal">
+    <div class="mtitle" id="mtitle">Product bewerken</div>
+    <div class="mfield"><div class="mlbl">Artikelcode</div><input class="minput" id="mc" placeholder="bv. 12345" type="text"></div>
+    <div class="mfield"><div class="mlbl">Artikelnaam</div><input class="minput" id="mn" placeholder="bv. Samsung Galaxy S25" type="text"></div>
+    <div class="mfield"><div class="mlbl">Punten</div><input class="minput" id="mp" placeholder="bv. 4" type="number" step="0.5" min="0"></div>
+    <div class="macts">
+      <button class="btn btn-g" style="flex:1" onclick="closeModal()">Annuleren</button>
+      <button class="btn btn-p" style="flex:1" onclick="saveModal()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let products=[],wrongs={},lastImport=null;
+let qmode='mixed',qfocus='all',qtypes=['name-pts','pts-name','code-name'];
+let session={},pending=[],missing=[],editCode=null;
+
+function init(){
+  try{products=JSON.parse(localStorage.getItem('kz-p')||'[]')}catch(e){}
+  try{wrongs=JSON.parse(localStorage.getItem('kz-w')||'{}')}catch(e){}
+  lastImport=localStorage.getItem('kz-i')||null;
+  renderList();updateStats();
+}
+
+function save(){
+  localStorage.setItem('kz-p',JSON.stringify(products));
+  localStorage.setItem('kz-w',JSON.stringify(wrongs));
+  if(lastImport)localStorage.setItem('kz-i',lastImport);
+}
+
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+  document.getElementById('scroll').scrollTop=0;
+  if(n==='quiz'){
+    document.getElementById('qsetup').style.display='';
+    document.getElementById('qactive').style.display='none';
+    document.getElementById('qresult').style.display='none';
+    updateStats();renderWeak();
+  }
+  if(n==='list')renderList();
+}
+
+// ── IMPORT ──
+function handleFile(e){const f=e.target.files[0];if(!f)return;e.target.value='';runOCR(f);}
+
+async function runOCR(file){
+  document.getElementById('izone').style.display='none';
+  document.getElementById('imp-tools').style.display='none';
+  document.getElementById('corr-sec').style.display='none';
+  document.getElementById('ocr-box').style.display='';
+  try{
+    const res=await Tesseract.recognize(file,'nld',{logger:m=>{
+      if(m.status==='recognizing text'){
+        const p=Math.round(m.progress*100);
+        document.getElementById('ocr-fill').style.width=p+'%';
+        document.getElementById('ocr-lbl').textContent='Scannen... '+p+'%';
+      }
+    }});
+    document.getElementById('ocr-box').style.display='none';
+    parseOCR(res.data);
+  }catch(e){
+    document.getElementById('ocr-box').style.display='none';
+    resetIzone();toast('Scannen mislukt. Probeer opnieuw.','error');
+  }
+}
+
+function parseOCR(data){
+  const ex=new Map(products.map(p=>[p.code,p]));
+  const sc=new Set();
+  pending=[];
+  data.lines.forEach(line=>{
+    const t=line.text.trim();
+    if(!t||t.length<3)return;
+    const r=parseLine(t,line.confidence);
+    if(!r)return;
+    sc.add(r.code);
+    const e2=ex.get(r.code);
+    r.status=!e2?'new':(e2.points!==r.points?'changed':'ok');
+    pending.push(r);
+  });
+  missing=products.filter(p=>!sc.has(p.code));
+  showCorr();
+}
+
+function parseLine(text,conf){
+  text=text.replace(/[|\\]/g,'').trim();
+  const nums=text.match(/\d+([.,]\d+)?/g);
+  if(!nums||!nums.length)return null;
+  const pts=parseFloat(nums[nums.length-1].replace(',','.'));
+  if(isNaN(pts)||pts<=0||pts>100)return null;
+  let code,name;
+  if(nums.length>1){
+    code=nums[0];
+    name=text.replace(new RegExp('^'+nums[0]+'\\s*'),'').replace(new RegExp('\\s*'+nums[nums.length-1].replace('.','\\.').replace(',','\\,')+'\\s*$'),'').trim();
+  }else{
+    code='ONBEKEND-'+Math.random().toString(36).substr(2,4).toUpperCase();
+    name=text.replace(nums[0],'').trim();
+  }
+  if(!name||name.length<2)return null;
+  return{code:code.trim(),name:name.trim(),points:pts,confidence:conf,flagged:conf<70,status:'ok'};
+}
+
+function showCorr(){
+  document.getElementById('corr-sec').style.display='';
+  const nw=pending.filter(r=>r.status==='new').length;
+  const ch=pending.filter(r=>r.status==='changed').length;
+  const fl=pending.filter(r=>r.flagged).length;
+  document.getElementById('scan-sum').textContent=`${pending.length} regels · ${nw} nieuw · ${ch} gewijzigd · ${fl} twijfelachtig`;
+  renderCrows();
+  if(missing.length){document.getElementById('miss-sec').style.display='';renderMissing();}
+  else document.getElementById('miss-sec').style.display='none';
+}
+
+function renderCrows(){
+  const c=document.getElementById('crow-wrap');c.innerHTML='';
+  pending.forEach((r,i)=>{
+    const d=document.createElement('div');
+    let cls='crow';
+    if(r.flagged)cls+=' fl';else if(r.status==='new')cls+=' nw';else if(r.status==='changed')cls+=' ch';
+    d.className=cls;
+    let badge=r.flagged?'<span class="badge bwarn">CHECK</span>':r.status==='new'?'<span class="badge bnew">NIEUW</span>':r.status==='changed'?'<span class="badge bchg">WIJZIG</span>':'<span class="badge bok">OK</span>';
+    d.innerHTML=`<input class="cinput" value="${esc(r.code)}" onchange="upd(${i},'code',this.value)" placeholder="Code"><input class="cinput" value="${esc(r.name)}" onchange="upd(${i},'name',this.value)" placeholder="Naam"><input class="cinput" type="number" value="${r.points}" onchange="upd(${i},'points',parseFloat(this.value))" step="0.5"><button class="delbtn" onclick="delRow(${i})">✕</button>`;
+    c.appendChild(d);
+  });
+}
+
+function upd(i,k,v){pending[i][k]=v;}
+function delRow(i){pending.splice(i,1);renderCrows();}
+function addRow(){pending.push({code:'',name:'',points:2,confidence:100,flagged:false,status:'new'});renderCrows();setTimeout(()=>{const r=document.querySelectorAll('.crow');r[r.length-1]?.scrollIntoView({behavior:'smooth'});},50);}
+
+function renderMissing(){
+  const c=document.getElementById('miss-wrap');c.innerHTML='';
+  missing.forEach((p,i)=>{
+    const d=document.createElement('div');d.className='miss-item';d.id='mp'+i;
+    d.innerHTML=`<div class="miss-info"><div class="miss-code">${esc(p.code)}</div><div class="miss-name">${esc(p.name)}</div><div class="miss-pts">${p.points} pt</div></div><div class="miss-acts"><button class="btn btn-g btn-sm" onclick="keepOne(${i})">Bewaren</button><button class="btn btn-d btn-sm" onclick="dropOne(${i})">Verwijderen</button></div>`;
+    c.appendChild(d);
+  });
+}
+
+function keepOne(i){pending.push({...missing[i],status:'ok',confidence:100,flagged:false});fo('mp'+i);}
+function dropOne(i){fo('mp'+i);}
+function keepAll(){missing.forEach((_,i)=>{pending.push({...missing[i],status:'ok',confidence:100,flagged:false});fo('mp'+i);});toast('Alle producten bewaard','success');}
+function dropAll(){missing.forEach((_,i)=>fo('mp'+i));toast('Alle producten verwijderd','success');}
+function fo(id){const e=document.getElementById(id);if(e){e.style.opacity='.3';e.style.pointerEvents='none';}}
+
+function confirmImport(){
+  const bad=pending.filter(r=>!r.name||!r.code||isNaN(r.points));
+  if(bad.length){toast(`${bad.length} rij(en) hebben ontbrekende data`,'error');return;}
+  products=pending.map(r=>({code:r.code.trim(),name:r.name.trim(),points:parseFloat(r.points)}));
+  lastImport=new Date().toLocaleDateString('nl-BE');
+  save();renderList();updateStats();
+  toast(`${products.length} producten opgeslagen`,'success');
+  cancelImport();
+}
+
+function cancelImport(){pending=[];missing=[];document.getElementById('corr-sec').style.display='none';resetIzone();}
+function resetIzone(){document.getElementById('izone').style.display='';document.getElementById('imp-tools').style.display='';}
+
+// ── EXPORT / JSON ──
+function exportData(){
+  if(!products.length){toast('Geen producten om te exporteren','error');return;}
+  const b=new Blob([JSON.stringify({products,wrongs,lastImport,exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`krefel-keuze-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
+  toast('Backup gedownload','success');
+}
+
+function importJSON(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{
+    try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d.products))throw 0;products=d.products;wrongs=d.wrongs||{};lastImport=d.lastImport||null;save();renderList();updateStats();toast(`${products.length} producten hersteld`,'success');}
+    catch{toast('Ongeldig JSON bestand','error');}
+  };r.readAsText(f);e.target.value='';
+}
+
+// ── QUIZ ──
+function setMode(m){
+  qmode=m;
+  ['mc','type','mix'].forEach(x=>document.getElementById('cm-'+x).classList.remove('on'));
+  document.getElementById('cm-'+m.replace('mixed','mix')).classList.add('on');
+}
+
+function setFocus(f){
+  qfocus=f;
+  document.getElementById('fc-all').classList.toggle('on',f==='all');
+  document.getElementById('fc-weak').classList.toggle('on',f==='weak');
+}
+
+function togQT(el){
+  const t=el.dataset.qt;el.classList.toggle('on');
+  qtypes=el.classList.contains('on')?[...new Set([...qtypes,t])]:qtypes.filter(x=>x!==t);
+}
+
+function updateStats(){
+  const n=products.length,wk=products.filter(p=>(wrongs[p.code]||0)>=2).length,ms=products.filter(p=>(wrongs[p.code]||0)===0&&n>0).length;
+  document.getElementById('s-total').textContent=n;
+  document.getElementById('s-weak').textContent=wk;
+  document.getElementById('s-master').textContent=ms;
+  document.getElementById('start-btn').disabled=n===0;
+}
+
+function renderWeak(){
+  const wk=products.filter(p=>(wrongs[p.code]||0)>=2).sort((a,b)=>(wrongs[b.code]||0)-(wrongs[a.code]||0)).slice(0,10);
+  const s=document.getElementById('weak-sec');
+  if(!wk.length){s.style.display='none';return;}
+  s.style.display='';
+  document.getElementById('weak-list').innerHTML=wk.map(p=>`<div class="witem"><span class="wname">${esc(p.name)}</span><span class="wpts">${p.points}pt</span><span class="wcnt">${wrongs[p.code]}x fout</span></div>`).join('');
+}
+
+function startQuiz(){
+  if(!qtypes.length){toast('Selecteer minstens één vraagtype','error');return;}
+  let pool=[...products];
+  if(qfocus==='weak'){pool=pool.filter(p=>(wrongs[p.code]||0)>=1);if(!pool.length){toast('Geen zwakke producten gevonden','error');return;}}
+  const weighted=[];pool.forEach(p=>{const w=1+(wrongs[p.code]||0);for(let i=0;i<w;i++)weighted.push(p);});
+  const qs=[];for(let i=0;i<15;i++){const p=weighted[Math.floor(Math.random()*weighted.length)];const t=qtypes[Math.floor(Math.random()*qtypes.length)];qs.push(buildQ(p,t,pool));}
+  session={questions:qs,cur:0,score:0,correct:0,wrong:0,streak:0,maxStreak:0,answered:false};
+  document.getElementById('qsetup').style.display='none';
+  document.getElementById('qactive').style.display='';
+  document.getElementById('qresult').style.display='none';
+  document.getElementById('qmax').textContent=qs.length;
+  renderQ();
+}
+
+function buildQ(product,type,pool){
+  let qtext,qsub,answer,typeLabel,ansDisplay;
+  if(type==='name-pts'){qtext=product.name;qsub='Code: '+product.code;answer=String(product.points);ansDisplay=product.points+' punten';typeLabel='NAAM → PUNTEN';}
+  else if(type==='pts-name'){qtext=product.points+' punten';qsub='Code: '+product.code;answer=product.name;ansDisplay=product.name;typeLabel='PUNTEN → NAAM';}
+  else{qtext=product.code;qsub='Wat is dit artikel?';answer=product.name;ansDisplay=product.name;typeLabel='CODE → NAAM';}
+  let others=pool.filter(p=>p.code!==product.code);shuffle(others);const dist=others.slice(0,3);
+  let opts;
+  if(type==='name-pts'){opts=[product.points,...dist.map(p=>p.points)];opts=[...new Set(opts)].slice(0,4).map(String);while(opts.length<4){const f=String(product.points+(Math.random()>.5?2:-2));if(!opts.includes(f))opts.push(f);}}
+  else{opts=[product.name,...dist.map(p=>p.name)];opts=[...new Set(opts)].slice(0,4);}
+  shuffle(opts);
+  return{product,type,qtext,qsub,answer,ansDisplay,typeLabel,opts};
+}
+
+function renderQ(){
+  const q=session.questions[session.cur];session.answered=false;
+  document.getElementById('qnum').textContent=session.cur+1;
+  document.getElementById('qscore').textContent=session.score;
+  document.getElementById('qprog').style.width=(session.cur/session.questions.length*100)+'%';
+  document.getElementById('fb-area').style.display='none';
+  const se=document.getElementById('streak-el');
+  if(session.streak>=3){se.style.display='';document.getElementById('streak-n').textContent=session.streak;}else se.style.display='none';
+  document.getElementById('qtype').textContent=q.typeLabel;
+  document.getElementById('qtext').textContent=q.qtext;
+  document.getElementById('qsub').textContent=q.qsub;
+  const useType=qmode==='type'||(qmode==='mixed'&&Math.random()<.4);
+  if(!useType){
+    document.getElementById('mc-area').style.display='grid';
+    document.getElementById('type-area').style.display='none';
+    const c=document.getElementById('mc-area');c.innerHTML='';
+    q.opts.forEach(o=>{const b=document.createElement('button');b.className='opt';b.textContent=o;b.onclick=()=>answerMC(o,q,b);c.appendChild(b);});
+  }else{
+    document.getElementById('mc-area').style.display='none';
+    document.getElementById('type-area').style.display='';
+    document.getElementById('tin').value='';document.getElementById('tin').className='tin';
+    document.getElementById('tsub').style.display='';
+    setTimeout(()=>document.getElementById('tin').focus(),80);
+  }
+}
+
+function answerMC(sel,q,btn){
+  if(session.answered)return;session.answered=true;
+  const ok=sel===q.answer||parseFloat(sel)===parseFloat(q.answer);
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;const ir=b.textContent===q.answer||parseFloat(b.textContent)===parseFloat(q.answer);if(ir)b.classList.add('correct');else if(b===btn&&!ok)b.classList.add('wrong');});
+  handle(ok,q);
+}
+
+function tkey(e){if(e.key==='Enter')submitType();}
+function submitType(){
+  if(session.answered)return;const q=session.questions[session.cur];const v=document.getElementById('tin').value.trim();if(!v)return;session.answered=true;
+  const ok=v.toLowerCase()===q.answer.toLowerCase()||parseFloat(v)===parseFloat(q.answer);
+  document.getElementById('tin').className='tin '+(ok?'correct':'wrong');
+  document.getElementById('tsub').style.display='none';handle(ok,q);
+}
+
+function handle(ok,q){
+  if(ok){session.correct++;session.streak++;session.score+=10+(session.streak>=3?5:0);if(session.streak>session.maxStreak)session.maxStreak=session.streak;if((wrongs[q.product.code]||0)>0)wrongs[q.product.code]--;}
+  else{session.wrong++;session.streak=0;wrongs[q.product.code]=(wrongs[q.product.code]||0)+1;}
+  save();
+  const fa=document.getElementById('fb-area'),ft=document.getElementById('fb-txt');fa.style.display='';
+  ft.className='fb '+(ok?'correct':'wrong');
+  ft.textContent=ok?`Correct! +${session.streak>=3?15:10} punten${session.streak>=3?' 🔥':''}`:`Fout. Juist antwoord: ${q.ansDisplay}`;
+}
+
+function nextQ(){session.cur++;if(session.cur>=session.questions.length){endQuiz();return;}renderQ();}
+
+function endQuiz(){
+  document.getElementById('qactive').style.display='none';document.getElementById('qresult').style.display='';
+  const pct=Math.round(session.correct/Math.max(session.questions.length,1)*100);
+  const el=document.getElementById('rpct');el.textContent=pct+'%';el.className='respct '+(pct>=80?'great':pct>=50?'ok':'bad');
+  document.getElementById('rlbl').textContent=pct>=80?'Uitstekend!':pct>=50?'Goed bezig':'Nog te leren';
+  document.getElementById('rsub').textContent=`Score: ${session.score} punten over ${session.questions.length} vragen`;
+  document.getElementById('rc').textContent=session.correct;document.getElementById('rw').textContent=session.wrong;document.getElementById('rs').textContent=session.maxStreak;
+  const sw=[...new Map(session.questions.map(q=>[q.product.code,q.product])).values()].filter(p=>(wrongs[p.code]||0)>=2).slice(0,8);
+  const ww=document.getElementById('rweak-wrap');
+  if(sw.length){ww.style.display='';document.getElementById('rweak-list').innerHTML=sw.map(p=>`<div class="witem"><span class="wname">${esc(p.name)}</span><span class="wpts">${p.points}pt</span><span class="wcnt">${wrongs[p.code]}x fout</span></div>`).join('');}
+  else ww.style.display='none';
+}
+
+// ── LIST ──
+function renderList(f=''){
+  const fl=f?products.filter(p=>p.name.toLowerCase().includes(f.toLowerCase())||p.code.toLowerCase().includes(f.toLowerCase())):[...products];
+  const sorted=[...fl].sort((a,b)=>b.points-a.points);
+  document.getElementById('lcnt').textContent=fl.length+' producten';
+  document.getElementById('lmeta').textContent=lastImport?'Laatste import: '+lastImport:'';
+  const c=document.getElementById('pcon');
+  if(!products.length){c.innerHTML='<div class="empty"><span class="eico">📦</span><div class="etitle">Geen producten</div><div class="esub">Importeer eerst een Keuzen document.</div></div>';return;}
+  if(!sorted.length){c.innerHTML='<div class="empty"><span class="eico">🔍</span><div class="etitle">Niets gevonden</div></div>';return;}
+  c.innerHTML='<div class="plist">'+sorted.map(p=>`<div class="pitem"><div class="pinfo"><div class="pcode">${esc(p.code)}</div><div class="pname">${esc(p.name)}</div>${(wrongs[p.code]||0)>=2?`<div class="pweak">${wrongs[p.code]}× fout</div>`:''}</div><div class="ppts"><div class="pval">${p.points}</div><div class="plbl">punten</div></div><div class="pacts"><button class="ibtn" onclick="openModal('${escA(p.code)}')">✎</button><button class="ibtn" onclick="delProd('${escA(p.code)}')">✕</button></div></div>`).join('')+'</div>';
+}
+
+function filterList(v){renderList(v);}
+function delProd(code){if(!confirm(`"${code}" verwijderen?`))return;products=products.filter(p=>p.code!==code);save();renderList(document.getElementById('srch').value);updateStats();toast('Verwijderd','success');}
+
+// ── MODAL ──
+function openModal(code){
+  editCode=code;const p=code?products.find(x=>x.code===code):null;
+  document.getElementById('mtitle').textContent=p?'Product bewerken':'Product toevoegen';
+  document.getElementById('mc').value=p?.code||'';document.getElementById('mn').value=p?.name||'';document.getElementById('mp').value=p?.points??'';
+  document.getElementById('mback').classList.add('open');
+}
+function closeModal(){document.getElementById('mback').classList.remove('open');}
+function saveModal(){
+  const code=document.getElementById('mc').value.trim(),name=document.getElementById('mn').value.trim(),pts=parseFloat(document.getElementById('mp').value);
+  if(!code||!name||isNaN(pts)){toast('Vul alle velden in','error');return;}
+  if(editCode){const i=products.findIndex(p=>p.code===editCode);if(i!==-1)products[i]={code,name,points:pts};}
+  else{if(products.find(p=>p.code===code)){toast('Code bestaat al','error');return;}products.push({code,name,points:pts});}
+  save();renderList(document.getElementById('srch').value);updateStats();closeModal();toast('Opgeslagen','success');
+}
+document.getElementById('mback').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ── UTILS ──
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escA(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/Keuzen-quiz/sw.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
