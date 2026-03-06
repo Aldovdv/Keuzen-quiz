@@ -5,6 +5,7 @@
   "start_url": "/Keuzen-quiz/",
   "scope": "/Keuzen-quiz/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#050a14",
   "theme_color": "#050a14",
